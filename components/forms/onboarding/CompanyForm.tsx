@@ -7,6 +7,12 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { countryList } from "@/app/utils/countriesList"
 import { Textarea } from "@/components/ui/textarea"
+import { UploadDropzone } from "@/components/general/uploadThingReexported"
+import { CreateCompany } from "@/app/actions"
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import Image from "next/image"
+import { XIcon } from "lucide-react"
 
 export default function CompanyForm() {
 
@@ -22,9 +28,25 @@ export default function CompanyForm() {
         }
     })
 
+    const [pending,setPending] = useState(false);
+
+    async function onSubmit(data:z.infer<typeof companySchema>) {
+          //safe to use
+          try {
+              setPending(true)
+              await CreateCompany(data);
+          } catch (error) {
+            if(error instanceof Error  && error.message !== "NEXT_REDIRECT"){
+              console.log("Something went wrong");
+            }
+          }finally{
+            setPending(false)
+          }
+    }
+
     return (
         <Form {...form}>
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit )}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                     <FormField
                         control={form.control}
@@ -123,6 +145,50 @@ export default function CompanyForm() {
                         </FormItem>
                     )}
                 />
+
+                <FormField
+                    control={form.control}
+                    name="logo"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Company Logo</FormLabel>
+                            <FormControl>
+                                <div>
+                                  {field.value ? (
+                                    <div className="relative w-fit">
+                                       <Image src={field.value} alt="Logo image" width={100} height={100}
+                                       className="rounded-lg"
+                                       />
+                                       <Button
+                                       type="button"
+                                       variant={"destructive"}
+                                       size={'icon'}
+                                       className="absolute -top-2 -right-2"
+                                       onClick={()=>field.onChange("")}
+                                       >
+                                        <XIcon className="size-4"/>
+                                       </Button>
+                                    </div>
+                                  ):(
+                                    <UploadDropzone endpoint={"imageUploader"} onClientUploadComplete={(res)=>{
+                                      field.onChange(res[0].url);
+                                    }}  
+                                    onUploadError={(error)=>{
+                                      console.log("Something went wrong",error);
+                                    }}
+                                    className="ut-button:bg-primary ut-button:text-white ut-button:hover:bg-primary/90 ut-label:text-muted-foreground ut-allowed-content:text-muted-foreground border-primary ut-button:cursor-pointer"
+                                    />
+                                  )}
+                                </div>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                <Button type="submit" className="w-full" disabled={pending}>
+                    {pending ? 'Submitting ...' : 'Continue'}
+                </Button>
             </form>
         </Form>
     )
