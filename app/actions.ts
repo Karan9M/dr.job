@@ -2,7 +2,7 @@
 
 import { requireUser } from "./utils/requireUser"
 import { z } from 'zod'
-import { companySchema, jobSeekerSchema } from "./utils/zodSchemas";
+import { companySchema, jobPostSchema, jobSeekerSchema } from "./utils/zodSchemas";
 import { prisma } from "./utils/db";
 import { redirect } from "next/navigation";
 import arcjet, { detectBot, shield } from "./utils/arcjet";
@@ -75,4 +75,43 @@ export async function createJobSeeker(data: z.infer<typeof jobSeekerSchema>) {
         }
     })
     return redirect('/')
+}
+
+export async function createJob(data:z.infer<typeof jobPostSchema>) {
+    const user = await requireUser();
+    const req = await request()
+    const decision = await aj.protect(req)
+
+    
+    if (decision.isDenied()) {
+        throw new Error('ForBidden')
+    }
+
+    const validateData = jobPostSchema.parse(data);
+    const comapny = await prisma.company.findUnique({
+        where: {
+            userId: user?.id
+        },
+        select:{
+            id:true
+        }
+    })
+    if(!comapny?.id){
+        return redirect("/")
+    }
+
+        await prisma.jobPost.create({
+        data: {
+            jobDescription:validateData.jobDescription,
+            jobTitle:validateData.jobTitle,
+            employementType:validateData.employementType,
+            location:validateData.location,
+            salaryFrom:validateData.salaryFrom,
+            salaryTo:validateData.salaryTo,
+            listingDuration:validateData.listingDuration,
+            benifits:validateData.benifits,
+            companyId:comapny.id
+        },
+    });
+    return redirect("/")
 }
