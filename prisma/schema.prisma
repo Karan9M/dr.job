@@ -22,12 +22,16 @@ model User {
   accounts      Account[]
   sessions      Session[]
 
+  stripeCustromerId String? @unique
+
   onboardingCompleted Boolean @default(false)
 
   userType UserType?
 
   Company   Company?
   JobSeeker JobSeeker?
+
+  SavedJobPosts  SavedJobPosts[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -125,6 +129,8 @@ model JobPost{
 
   status JobPostStatus @default(DRAFT)
 
+  SavedJobPost SavedJobPosts[]
+
   Company Company? @relation(fields: [companyId],references: [id])
   companyId String
   createdAt DateTime @default(now())
@@ -135,4 +141,19 @@ enum JobPostStatus {
     DRAFT
     ACTIVE
     EXPIRED
+}
+
+model SavedJobPosts{
+  id String @id @default(uuid())
+  jobPost JobPost @relation(fields: [jobPostId], references: [id])
+  jobPostId String
+
+  User User @relation(fields: [userId] ,references: [id])
+  userId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+
+  @@unique([userId,jobPostId])
 }

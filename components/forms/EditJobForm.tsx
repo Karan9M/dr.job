@@ -1,78 +1,84 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { editJobPost } from "@/app/actions";
+import { countryList } from "@/app/utils/countriesList";
 import { jobPostSchema } from "@/app/utils/zodSchemas";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
-
-import { countryList } from "@/app/utils/countriesList";
-import { Command, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
 import { XIcon } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import BenifitsSelector from "../general/BenifitsSelector";
-import JobListingDurationSelector from "../general/JobListingDurationSelector";
 import SalaryRangeSelector from "../general/SalaryRangeSelector";
 import { UploadDropzone } from "../general/uploadThingReexported";
 import JobDescriptionEditor from "../richTextEditor.tsx/JobDescriptionEditor";
 import { Button } from "../ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Command, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "../ui/command";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 import { Input } from "../ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "../ui/select";
 import { Textarea } from "../ui/textarea";
-import { createJob } from "@/app/actions";
-import { useState } from "react";
-
 
 interface iAppProps{
-    companyName: string;
-    companyLocation: string;
-    companyAbout: string;
-    companyLogo: string;
-    companyWebsite: string;
-    companyXAccount: string | null;
+    jobPost: {
+        jobTitle: string;
+        employementType: string;
+        location: string;
+        salaryFrom: number;
+        salaryTo: number;
+        jobDescription: string;
+        listingDuration: number;
+        benifits: string[];
+        id: string;
+        Company: {
+            location:string,
+            xAccount:string | null,
+            website:string
+            logo:string,
+            about:string,
+            name:string
+        } | null;
+    }
  }
 
-export default function CreateJobForm({companyAbout,companyLocation,companyLogo,companyName,companyWebsite,companyXAccount}:iAppProps) {
+export default function EditJobForm({jobPost}:iAppProps) {
 
+     const form = useForm<z.infer<typeof jobPostSchema>>({
+            resolver: zodResolver(jobPostSchema),
+            defaultValues: {
+                benifits: jobPost.benifits,
+                companyAbout: jobPost.Company?.about,
+                companyLocation: jobPost.Company?.location,
+                companyName: jobPost.Company?.name,
+                companyLogo: jobPost.Company?.logo,
+                companyWebsite: jobPost.Company?.website,
+                companyXAccount: jobPost.Company?.xAccount || '',
+                employementType: jobPost.employementType,
+                jobDescription: jobPost.jobDescription,
+                jobTitle: jobPost.jobTitle,
+                listingDuration: jobPost.listingDuration,
+                location: jobPost.location,
+                salaryFrom: jobPost.salaryFrom,
+                salaryTo: jobPost.salaryTo,
+            }
+        })
 
-    const form = useForm<z.infer<typeof jobPostSchema>>({
-        resolver: zodResolver(jobPostSchema),
-        defaultValues: {
-            benifits: [],
-            companyAbout: companyAbout,
-            companyLocation: companyLocation,
-            companyName: companyName,
-            companyLogo: companyLogo,
-            companyWebsite: companyWebsite,
-            companyXAccount: companyXAccount || '',
-            employementType: "",
-            jobDescription: "",
-            jobTitle: "",
-            listingDuration: 30,
-            location: "",
-            salaryFrom: 0,
-            salaryTo: 0,
-        }
-    })
-
-    // console.log(companyLocation)
-    const [pending,setPending] = useState(false)
-    async function onSubmit(values:z.infer<typeof jobPostSchema>) {
-        try {
-            setPending(true)
-            await createJob(values)
-        } catch (error) {
-            if (error instanceof Error && error.message !== "NEXT_REDIRECT") {
-                console.log("Something went wrong");
-              }
-        }
-        finally{
-            setPending(false)
-        }
-    }
-
-
+        const [pending,setPending] = useState(false)
+            async function onSubmit(values:z.infer<typeof jobPostSchema>) {
+                try {
+                    setPending(true)
+                    await editJobPost(values,jobPost.id)
+                } catch (error) {
+                    if (error instanceof Error && error.message !== "NEXT_REDIRECT") {
+                        console.log("Something went wrong");
+                      }
+                }
+                finally{
+                    setPending(false)
+                }
+            }
 
     return (
         <Form {...form}>
@@ -229,7 +235,7 @@ export default function CreateJobForm({companyAbout,companyLocation,companyLogo,
                                         <FormControl>
                                             <Input placeholder="Company name" {...field} />
                                         </FormControl>
-                                        <FormMessage/>
+                                        <FormMessage />
                                     </FormItem>
                                 )}
                             />
@@ -240,7 +246,7 @@ export default function CreateJobForm({companyAbout,companyLocation,companyLogo,
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Company Location</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value || companyLocation}>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue
@@ -359,27 +365,8 @@ export default function CreateJobForm({companyAbout,companyLocation,companyLogo,
                         />
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Job Listing duration</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <FormField
-                        control={form.control}
-                        name="listingDuration"
-                        render={({field})=>(
-                          <FormItem>
-                            <FormControl>
-                                <JobListingDurationSelector field={field as any}/>
-                            </FormControl>
-                            <FormMessage/>
-                          </FormItem>  
-                        )}
-                        />
-                    </CardContent>
-                </Card>
                 <Button type="submit" className="w-full" disabled={pending}>
-                        {pending ? 'Submitting ...':'Create Job Post'}
+                    {pending ? 'Submitting ...' : 'Edit Job Post'}
                 </Button>
             </form>
         </Form>

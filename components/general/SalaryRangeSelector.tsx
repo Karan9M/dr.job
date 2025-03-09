@@ -9,10 +9,9 @@ interface iAppProps {
     minSalary : number,
     maxSalary : number, 
     step : number,
-    currency : string
 }
 
-export default function SalaryRangeSelector({control,currency,maxSalary,minSalary,step}:iAppProps) {
+export default function SalaryRangeSelector({control,maxSalary,minSalary,step}:iAppProps) {
 
     const {field:fromFiled} = useController({
         name:"salaryFrom",
