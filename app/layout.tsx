@@ -1,13 +1,13 @@
 import { ThemeProvider } from "@/components/general/ThemeProvider";
 import type { Metadata } from "next";
-import {Poppins} from "next/font/google"
+import { Poppins } from "next/font/google"
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
 
 const poppins = Poppins({
   subsets: ["latin"],
-  weight: ["400","700"]
+  weight: ["400", "700"]
 })
 
 export const metadata: Metadata = {
@@ -22,6 +22,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/logo.png" type="image/png" />
+      </head>
       <body
         className={poppins.className}
       >
@@ -31,8 +34,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-            {children}
-            <Toaster closeButton richColors/>
+          {children}
+          <Toaster closeButton richColors />
         </ThemeProvider>
       </body>
     </html>
